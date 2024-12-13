@@ -27,7 +27,7 @@ public class Main {
         System.out.println(String.valueOf(node1));
         System.out.println(String.valueOf(node2));
 
-//        tree1.deleteNode(12);
-//        tree1.printTree(node1, 0);
+        tree1.deleteNode(9);
+        tree1.printTree(node1, 0);
     }
 }

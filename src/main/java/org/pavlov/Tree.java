@@ -106,18 +106,40 @@ public class Tree {
                 parentDelNode.setLeftNode(delNode.getRightNode());
                 delNode.getRightNode().setParentNode(parentDelNode);
             }
-        } else {                                                                    //если оба листа
+        } else if (delNode.getLeftNode() != null && delNode.getRightNode() != null) {                                                                    //если оба листа
 
             if (delNode.getValue() > parentDelNode.getValue()) {
-                Node leftChild = delNode.getLeftNode();
-                Node rightChild = delNode.getRightNode();
+                Node curNode = delNode.getLeftNode();
 
-                parentDelNode.setRightNode(leftChild);
-                delNode.getLeftNode().setParentNode(parentDelNode);
-                delNode.getRightNode().setParentNode(delNode.getLeftNode());
+                if (curNode.getRightNode() != null) {
+                    while (curNode.getRightNode() != null) {
+                        curNode = curNode.getRightNode();
+                        return;
+                    }
+                }
+
+                parentDelNode.setRightNode(curNode);
+                curNode.setRightNode(delNode.getRightNode());
+                curNode.setLeftNode(delNode.getLeftNode());
+
+                delNode.getRightNode().setParentNode(curNode);
+                delNode.getLeftNode().setParentNode(curNode);
             } else {
-                parentDelNode.setLeftNode(delNode.getRightNode());
-                delNode.getRightNode().setParentNode(parentDelNode);
+                Node curNode = delNode.getLeftNode();
+
+                if (curNode.getRightNode() != null) {
+                    while (curNode.getRightNode() != null) {
+                        curNode = curNode.getRightNode();
+                        return;
+                    }
+                }
+
+                parentDelNode.setLeftNode(curNode);
+                curNode.setRightNode(delNode.getRightNode());
+                curNode.setLeftNode(delNode.getLeftNode());
+
+                delNode.getRightNode().setParentNode(curNode);
+                delNode.getLeftNode().setParentNode(curNode);
             }
         }
 
