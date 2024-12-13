@@ -22,17 +22,12 @@ public class Node {
     public String toString() {
         StringBuilder result = new StringBuilder();
 
-        try {
-            result.append(getValue())
-                    .append(", left: ").append(getLeftNode() != null ? getLeftNode().getValue() : null)
-                    .append(", right: ").append(getRightNode() != null ? getRightNode().getValue() : null)
-                    .append(", parent: ").append(getParentNode() != null ? getParentNode().getValue() : null)
-                    .append(", operations to find: ").append(level);
+        result.append(getValue())
+                .append(", left: ").append(getLeftNode() != null ? getLeftNode().getValue() : null)
+                .append(", right: ").append(getRightNode() != null ? getRightNode().getValue() : null)
+                .append(", parent: ").append(getParentNode() != null ? getParentNode().getValue() : null)
+                .append(", operations to find: ").append(level);
 
-        } catch (NullPointerException e) {
-            System.out.println("No node could be found");
-        }
         return result.toString();
-
     }
 }

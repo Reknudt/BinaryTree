@@ -18,7 +18,7 @@ public class Main {
         tree1.insert(13);
         tree1.insert(12);
         tree1.insert(15);
-
+        tree1.insert(10);
 
 
         Node node1 = tree1.findNodeByValue(4);
@@ -26,5 +26,8 @@ public class Main {
         Node node2 = tree1.findNodeByValue(5);
         System.out.println(String.valueOf(node1));
         System.out.println(String.valueOf(node2));
+
+//        tree1.deleteNode(12);
+//        tree1.printTree(node1, 0);
     }
 }

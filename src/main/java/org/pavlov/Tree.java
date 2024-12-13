@@ -81,25 +81,48 @@ public class Tree {
         Node delNode = findNodeByValue(value);
         Node parentDelNode = delNode.getParentNode();
 
-        if (delNode.getLeftNode() == null && delNode.getRightNode() == null) {
-            if (delNode.getValue() > parentDelNode.getValue()) {
-                parentDelNode.setRightNode(null);
-            } else {
-                parentDelNode.setLeftNode(null);
-            }
-        } else if (delNode.getLeftNode() != null && delNode.getRightNode() == null) {
-            Node leftNode = delNode.getLeftNode();
+        if (delNode.getLeftNode() == null && delNode.getRightNode() == null) {                  //если нет листьев
 
             if (delNode.getValue() > parentDelNode.getValue()) {
                 parentDelNode.setRightNode(null);
             } else {
                 parentDelNode.setLeftNode(null);
             }
+        } else if (delNode.getLeftNode() != null && delNode.getRightNode() == null) {       //если есть один левый лист
 
+            if (delNode.getValue() > parentDelNode.getValue()) {
+                parentDelNode.setRightNode(delNode.getLeftNode());
+                delNode.getLeftNode().setParentNode(parentDelNode);
+            } else {
+                parentDelNode.setLeftNode(delNode.getLeftNode());
+                delNode.getLeftNode().setParentNode(parentDelNode);
+            }
+        } else if (delNode.getLeftNode() == null && delNode.getRightNode() != null) {       //если есть один правый лист
 
-        } else if (delNode.getLeftNode() == null && delNode.getRightNode() != null) {
+            if (delNode.getValue() > parentDelNode.getValue()) {
+                parentDelNode.setRightNode(delNode.getRightNode());
+                delNode.getRightNode().setParentNode(parentDelNode);
+            } else {
+                parentDelNode.setLeftNode(delNode.getRightNode());
+                delNode.getRightNode().setParentNode(parentDelNode);
+            }
+        } else {                                                                    //если оба листа
 
+            if (delNode.getValue() > parentDelNode.getValue()) {
+                Node leftChild = delNode.getLeftNode();
+                Node rightChild = delNode.getRightNode();
+
+                parentDelNode.setRightNode(leftChild);
+                delNode.getLeftNode().setParentNode(parentDelNode);
+                delNode.getRightNode().setParentNode(delNode.getLeftNode());
+            } else {
+                parentDelNode.setLeftNode(delNode.getRightNode());
+                delNode.getRightNode().setParentNode(parentDelNode);
+            }
         }
+
+
+
     }
 
     public void printTree(Node node, int level) {
