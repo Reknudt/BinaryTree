@@ -12,7 +12,6 @@ public class Node {
     private Node leftNode;
     private Node rightNode;
     private Node parentNode;
-    private int level;
 
     public Node(int value) {
         setValue(value);
@@ -20,14 +19,10 @@ public class Node {
 
     @Override
     public String toString() {
-        StringBuilder result = new StringBuilder();
 
-        result.append(getValue())
-                .append(", left: ").append(getLeftNode() != null ? getLeftNode().getValue() : null)
-                .append(", right: ").append(getRightNode() != null ? getRightNode().getValue() : null)
-                .append(", parent: ").append(getParentNode() != null ? getParentNode().getValue() : null)
-                .append(", operations to find: ").append(level);
-
-        return result.toString();
+        return  getValue() +
+                ", left: " + (getLeftNode() != null ? getLeftNode().getValue() : null) +
+                ", right: " + (getRightNode() != null ? getRightNode().getValue() : null) +
+                ", parent: " + (getParentNode() != null ? getParentNode().getValue() : null);
     }
 }

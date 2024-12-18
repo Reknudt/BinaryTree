@@ -2,6 +2,8 @@ package org.pavlov;
 
 import lombok.NoArgsConstructor;
 
+import java.awt.desktop.SystemEventListener;
+
 @NoArgsConstructor
 public class Tree {
 
@@ -9,8 +11,9 @@ public class Tree {
 
     public Node findNodeByValue(int value) {
         Node curNode = rootNode;
-
+        int ops = 1;
         while(curNode.getValue() != value) {
+            ops++;
             if (value < curNode.getValue()) {
                 curNode = curNode.getLeftNode();
             } else {
@@ -21,21 +24,21 @@ public class Tree {
                 return null;
             }
         }
+        System.out.println("Operations to find " + curNode.getValue() + ": " + ops);
         return curNode;
     }
 
     public void insert(int value) {
         String addValue = "Node with value " + value + " added";
+        int level = 1;
 
         if (rootNode == null) {
             rootNode = new Node(value);
-            rootNode.setLevel(1);
 
             System.out.println("Root " + addValue);
             return;
         }
 
-        int level = 1;
         Node curNode = rootNode;
 
         while(true) {
@@ -51,7 +54,6 @@ public class Tree {
                     Node leftNode = curNode.getLeftNode();
 
                     leftNode.setParentNode(curNode);
-                    leftNode.setLevel(level);
 
                     System.out.println(addValue);
                     return;
@@ -65,7 +67,6 @@ public class Tree {
 
                     Node rightNode = curNode.getRightNode();
                     rightNode.setParentNode(curNode);
-                    rightNode.setLevel(level);
 
                     System.out.println(addValue);
                     return;
@@ -106,7 +107,7 @@ public class Tree {
                 parentDelNode.setLeftNode(delNode.getRightNode());
                 delNode.getRightNode().setParentNode(parentDelNode);
             }
-        } else if (delNode.getLeftNode() != null && delNode.getRightNode() != null) {                                                                    //если оба листа
+        } else if (delNode.getLeftNode() != null && delNode.getRightNode() != null) {                     //если оба листа
 
             if (delNode.getValue() > parentDelNode.getValue()) {
                 Node curNode = delNode.getLeftNode();
@@ -114,54 +115,77 @@ public class Tree {
                 if (curNode.getRightNode() != null) {
                     while (curNode.getRightNode() != null) {
                         curNode = curNode.getRightNode();
-                        return;
                     }
                 }
+                System.out.println("Change node: " + curNode.getValue());
+
+
+                Node delRightChild = delNode.getRightNode();
+                Node delLeftChild = delNode.getLeftNode();
 
                 parentDelNode.setRightNode(curNode);
-                curNode.setRightNode(delNode.getRightNode());
-                curNode.setLeftNode(delNode.getLeftNode());
 
-                delNode.getRightNode().setParentNode(curNode);
-                delNode.getLeftNode().setParentNode(curNode);
+                curNode.setRightNode(delRightChild);
+                if (curNode != delLeftChild) {
+                    curNode.setLeftNode(delLeftChild);
+                } else if (delLeftChild.getLeftNode() != null){
+                    curNode.setLeftNode(delLeftChild.getLeftNode());
+                } else {
+                    curNode.setLeftNode(null);
+                }
+                curNode.setParentNode(parentDelNode);
+
+
+                delRightChild.setParentNode(curNode);
+                delLeftChild.setParentNode(curNode);
             } else {
                 Node curNode = delNode.getLeftNode();
 
                 if (curNode.getRightNode() != null) {
                     while (curNode.getRightNode() != null) {
                         curNode = curNode.getRightNode();
-                        return;
                     }
                 }
+                System.out.println("Change node (parent is right): " + curNode.getValue());
 
                 parentDelNode.setLeftNode(curNode);
+
                 curNode.setRightNode(delNode.getRightNode());
-                curNode.setLeftNode(delNode.getLeftNode());
+                if (curNode != delNode.getLeftNode()) curNode.setLeftNode(delNode.getLeftNode());
+
+                curNode.setParentNode(parentDelNode);
+
 
                 delNode.getRightNode().setParentNode(curNode);
                 delNode.getLeftNode().setParentNode(curNode);
             }
         }
-
-
-
+        System.out.println("Node with value: " + delNode.getValue() + " deleted");
     }
 
-    public void printTree(Node node, int level) {
+
+    public void printTree() {
+        if (rootNode == null) {
+            return;
+        }
+
+        printRightTree(rootNode.getRightNode(), 1);
+        System.out.println(rootNode.getValue());
+        printLeftTree(rootNode.getLeftNode(),1);
+    }
+
+    public void printLeftTree(Node node, int level) {
         if (node == null) {
             return;
         }
 
         printRightTree(node.getRightNode(), level + 1);
-
-        if (level > 0) {
-            System.out.print("\t".repeat(level - 1));
-            System.out.print("  |__");
-        }
+        System.out.print("\t".repeat(level - 1));
+        System.out.print("  |__");
         System.out.println(node.getValue());
-
-        printTree(node.getLeftNode(), level + 1);
+        printLeftTree(node.getLeftNode(), level + 1);
     }
+
 
     public void printRightTree(Node node, int level) {
         if (node == null) {
@@ -169,14 +193,10 @@ public class Tree {
         }
 
         printRightTree(node.getRightNode(), level + 1);
-
-        if (level > 0) {
-            System.out.print("\t".repeat(level - 1));
-            System.out.print("  /▔▔");
-        }
+        System.out.print("\t".repeat(level - 1));
+        System.out.print("  /▔▔");
         System.out.println(node.getValue());
-
-        printTree(node.getLeftNode(), level + 1);
+        printLeftTree(node.getLeftNode(), level + 1);
     }
 
 }
