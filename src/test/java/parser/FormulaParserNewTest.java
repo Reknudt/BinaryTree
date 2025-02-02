@@ -139,7 +139,7 @@ public class FormulaParserNewTest {
         for (int i = 0; i < tokens.size(); i++) {
             String token = tokens.get(i);
             if (!isOperator(token) && !isNumber(token) && !isFunction(token)
-                && !token.equals("(") && !token.equals(")")) {
+                && !token.equals("(") && !token.equals(")") && !token.equals("~")) {
                 throw new IllegalArgumentException("Illegal operation entered: " + token);
             }
             if (Arrays.stream(functionsWithArgs).toList().contains(tokens.get(i).replace("-",""))
@@ -150,7 +150,6 @@ public class FormulaParserNewTest {
                     && i < tokens.size() && !tokens.get(i+1).equals("(")) {
                 throw new IllegalArgumentException("This function needs bracket '(' : " + token);
             }
-//             && !tokens.get(i+1).equals("(")
         }
     }
 
@@ -173,16 +172,11 @@ public class FormulaParserNewTest {
 
             if ((token.equals("(") && i != 0)
                     && (!isOperator(tokens.get(i - 1))
+                        && !tokens.get(i-1).equals("~")
                         && !tokens.get(i-1).equals("(")
                         && !Arrays.stream(functionsWithArgs).toList().contains(tokens.get(i - 1).replace("-","")))) {
                 throw new IllegalArgumentException("Illegal operator placement " + tokens.get(i - 1) + token);
             }
-//            if (token.equals("(") && i < tokens.size()-1) {
-//                if (isOperator(tokens.get(i+1))
-//                        && !Arrays.stream(functionsWithArgs).toList().contains(tokens.get(i - 1).replace("-",""))) {
-//                    throw new IllegalArgumentException("Illegal operator placement " + token + tokens.get(i + 1));
-//                }
-//            }
 
             if (token.equals(")")) {
                 if (i == 0) {
@@ -213,20 +207,15 @@ public class FormulaParserNewTest {
 
             if (Character.isDigit(ch) || (ch == '.' && !buffer.isEmpty())) {
                 buffer.append(ch);
-
             } else if (Character.isLetter(ch)) {
                 buffer.append(ch);
-
             } else {
                 if (!buffer.isEmpty()) {
                     tokens.add(buffer.toString());
                     buffer.setLength(0);
                 }
-                if (ch == '-'
-                        && (i == 0 || expression.charAt(i - 1) == '('
-                        || isOperator(String.valueOf(expression.charAt(i - 1))))) {
-
-                    buffer.append(ch);
+                if (ch == '-' && (i == 0 || expression.charAt(i - 1) == '(' || isOperator(String.valueOf(expression.charAt(i - 1))))) {
+                    tokens.add("~");
                 } else {
                     tokens.add(String.valueOf(ch));
                 }
@@ -243,15 +232,13 @@ public class FormulaParserNewTest {
         Queue<String> output = new LinkedList<>();
         Deque<String> operators = new ArrayDeque<>();
         Map<String, Integer> precedence = Map.of(
-                "+", 1, "-", 1,
-                "*", 2, "/", 2
+                "~", 3,
+                "*", 2, "/", 2,
+                "+", 1, "-", 1
         );
 
         for (String token : tokens) {
             if (isNumber(token)) {
-                output.add(token);
-            } else if (!token.contains("-") && isFunction(token)
-                    && !Arrays.stream(functionsWithArgs).toList().contains(token)) {
                 output.add(token);
             } else if (isFunction(token)) {
                 operators.push(token);
@@ -261,26 +248,20 @@ public class FormulaParserNewTest {
                 while (!operators.isEmpty() && !operators.peek().equals("(")) {
                     output.add(operators.pop());
                 }
-                if (!operators.isEmpty() && operators.peek().equals("(")) {
-                    operators.pop();
-                    if (!operators.isEmpty() && isFunction(operators.peek())) {
-                        output.add(operators.pop());
-                    }
+                operators.pop();
+                if (!operators.isEmpty() && isFunction(operators.peek())) {
+                    output.add(operators.pop());
                 }
-            } else if (isOperator(token)) {
-                while (!operators.isEmpty()
-                        && precedence.getOrDefault(operators.peek(), 0) >= precedence.get(token)) {
+            } else if (isOperator(token) || token.equals("~")) {
+                while (!operators.isEmpty() && precedence.getOrDefault(operators.peek(), 0) >= precedence.get(token)) {
                     output.add(operators.pop());
                 }
                 operators.push(token);
             }
-            System.out.println("operators " + operators + " token " + token + " output " + output);
         }
-
         while (!operators.isEmpty()) {
             output.add(operators.pop());
         }
-
         return output;
     }
 
@@ -289,45 +270,29 @@ public class FormulaParserNewTest {
 
         while (!postfix.isEmpty()) {
             String token = postfix.poll();
-
-            System.out.println("stack: " + stack + " postfix: " + postfix + " token: " + token);
-
             if (isNumber(token)) {
                 stack.push(new BigDecimal(token));
             } else if (isOperator(token)) {
-
                 BigDecimal b = stack.pop();
-
-                if ((token.equals("-") || token.equals("+")) && stack.isEmpty()) {      //if exp start with + or -
-                    stack.push(applyOperator(BigDecimal.valueOf(0), b, token));
-
-                } else {
-                    BigDecimal a = stack.pop();
-                    stack.push(applyOperator(a, b, token));
-                }
+                BigDecimal a = stack.pop();
+                stack.push(applyOperator(a, b, token));
+            } else if (token.equals("~")) {
+                stack.push(stack.pop().negate());
             } else if (isFunction(token)) {
-                String noSubtractToken = token.replace("-", "");
-
-                FunctionType function = FunctionType.valueOf(noSubtractToken);
+                FunctionType function = FunctionType.valueOf(token);
                 BigDecimal result;
-
-                if (!Arrays.stream(functionsWithArgs).toList().contains(noSubtractToken)) {
-                    result = function.apply();
-                } else {
+                if (Arrays.asList(functionsWithArgs).contains(token)) {
                     BigDecimal arg = stack.pop();
                     result = function.apply(arg);
+                } else {
+                    result = function.apply();
                 }
-
-                if (token.startsWith("-")) {
-                    result = result.negate();
-                }
-
                 stack.push(result);
             }
         }
-
         return stack.pop();
     }
+
 
     private static BigDecimal applyOperator(BigDecimal a, BigDecimal b, String operator) {
         switch (operator) {
@@ -374,9 +339,9 @@ public class FormulaParserNewTest {
 
     @Test
     void test1() {
-        String f1 = "2/roundopersum(-(-2)";
+//        String f1 = "2/roundopersum(-(-2))";
 
-//        String f1 = "33/(88*roundopersum(-(12-(-cntop)+7)*(1/sumop)-5))";
+        String f1 = "33/(88*roundopersum(-(12-(-cntop)+7)*(1/sumop)-5))";
 //        String f1 = "2 * roundopersum(-(12-(-cntop)+7)*(1/sumop)-5)";
 //        String f1 = "ROUNDCOST(13.2342341341234";
         f1 = validate(f1);
