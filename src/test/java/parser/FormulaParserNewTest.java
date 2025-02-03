@@ -106,6 +106,7 @@ public class FormulaParserNewTest {
             for(char c : formula.toCharArray()) {
                 if (c == '(') obCount++;
                 if (c == ')') cbCount++;
+                if (cbCount > obCount) throw new IllegalArgumentException("Illegal ')' found");
             }
             if (cbCount < obCount) {
                 while(cbCount < obCount) {
@@ -158,7 +159,7 @@ public class FormulaParserNewTest {
 
         for (int i = 0; i < tokens.size(); i++) {
             String token = tokens.get(i);
-            if (isOperator(token) && (isOperator(tokens.get(i+1)) || tokens.get(i+1).contains("-"))) {
+            if ((isOperator(token) || token.equals("~")) && (isOperator(tokens.get(i+1)) || tokens.get(i+1).contains("-") || tokens.get(i+1).equals("~"))) {
                 throw new IllegalArgumentException("Too many operators entered: " + token + tokens.get(i+1));
             }
         }
@@ -176,6 +177,13 @@ public class FormulaParserNewTest {
                         && !tokens.get(i-1).equals("(")
                         && !Arrays.stream(functionsWithArgs).toList().contains(tokens.get(i - 1).replace("-","")))) {
                 throw new IllegalArgumentException("Illegal operator placement " + tokens.get(i - 1) + token);
+            }
+
+            if (token.equals("(")
+                    && i < tokens.size()
+                    && (isOperator(tokens.get(i+1))
+                    && !tokens.get(i+1).equals("~"))) {
+                throw new IllegalArgumentException("Illegal operator placement " + token + tokens.get(i+1));
             }
 
             if (token.equals(")")) {
@@ -205,7 +213,7 @@ public class FormulaParserNewTest {
         for (int i = 0; i < expression.length(); i++) {
             char ch = expression.charAt(i);
 
-            if (Character.isDigit(ch) || (ch == '.' && !buffer.isEmpty())) {
+            if (Character.isDigit(ch) || (ch == '.' && !buffer.isEmpty()) || ch == '_') {
                 buffer.append(ch);
             } else if (Character.isLetter(ch)) {
                 buffer.append(ch);
@@ -241,7 +249,11 @@ public class FormulaParserNewTest {
             if (isNumber(token)) {
                 output.add(token);
             } else if (isFunction(token)) {
-                operators.push(token);
+                if (Arrays.stream(functionsWithArgs).toList().contains(token.replace("-",""))) {
+                    operators.push(token);
+                } else {
+                    output.add(token);
+                }
             } else if (token.equals("(")) {
                 operators.push(token);
             } else if (token.equals(")")) {
@@ -281,7 +293,7 @@ public class FormulaParserNewTest {
             } else if (isFunction(token)) {
                 FunctionType function = FunctionType.valueOf(token);
                 BigDecimal result;
-                if (Arrays.asList(functionsWithArgs).contains(token)) {
+                if (Arrays.asList(FunctionType.functionsWithArgs).contains(token)) {
                     BigDecimal arg = stack.pop();
                     result = function.apply(arg);
                 } else {
@@ -304,7 +316,7 @@ public class FormulaParserNewTest {
                 return a.multiply(b);
             case "/": {
                 try {
-                    return a.divide(b, 4, BigDecimal.ROUND_HALF_EVEN);
+                    return a.divide(b, 8, BigDecimal.ROUND_HALF_EVEN);
                 } catch (ArithmeticException e) {
                     throw new ArithmeticException("Division by zero found");
                 }
@@ -339,11 +351,14 @@ public class FormulaParserNewTest {
 
     @Test
     void test1() {
-//        String f1 = "2/roundopersum(-(-2))";
-
-        String f1 = "33/(88*roundopersum(-(12-(-cntop)+7)*(1/sumop)-5))";
-//        String f1 = "2 * roundopersum(-(12-(-cntop)+7)*(1/sumop)-5)";
-//        String f1 = "ROUNDCOST(13.2342341341234";
+//        String f1 = "2/roundopersum(-(-(-(-(-2)))))";
+//        String f1 = "33/(88*roundopersum(-(12-(-CNTOP)+7)*(1/SUMOP)-5))";
+//        String f1 = "-(2 *(-(-(-1)))+4)/(-roundopersum(-(12-(-cntop)+7)*(1/sumop)-5))";
+//        String f1 = "-ROUNDCOST(13.2342341341234/(-reserv*(-cntop-3.32457594759)+ROUNDOPERSUM(3.445353453*sumop)/1-23*3.222";
+//        String f1 = "-(-roundcost(8.1/123)*23.2222)/(-1)*(3.33-2.1*cntop)/(-25.2)";
+//        String f1 = "reserv*(-2+3)+cntop";
+        String f1 = "4*CNTOP - (-5/(2))";
+        System.out.println(f1);
         f1 = validate(f1);
         System.out.println(f1);
         BigDecimal result = calculate(f1);
